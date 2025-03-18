@@ -21,42 +21,27 @@
 #include "mini-printf.h"
 
 
-struct wb_uart {
-	uint32_t data;
-	uint32_t clkdiv;
-} __attribute__((packed,aligned(4)));
-
-static volatile struct wb_uart * const uart_regs = (void*)(UART_BASE);
-
+static volatile uint8_t* uart_data = (uint8_t*)UART_BASE;
 
 void
-console_init(void)
-{
-	uart_regs->clkdiv = 23;	/* 1 Mbaud with clk=25MHz */
-}
+console_init(void) {}
 
 void
 console_putchar(char c)
 {
-	uart_regs->data = c;
+	*uart_data = c;
 }
 
 char
 console_getchar(void)
 {
-	int32_t c;
-	do {
-		c = uart_regs->data;
-	} while (c & 0x80000000);
-	return c;
+	return *uart_data;
 }
 
 int
 console_getchar_nowait(void)
 {
-	int32_t c;
-	c = uart_regs->data;
-	return c & 0x80000000 ? -1 : (c & 0xff);
+  return *uart_data;
 }
 
 void
@@ -64,11 +49,10 @@ console_puts(const char *p)
 {
 	char c;
 	while ((c = *(p++)) != 0x00)
-		uart_regs->data = c;
+		*uart_data = c;
 }
 
-int
-console_printf(const char *fmt, ...)
+int console_printf(const char *fmt, ...)
 {
 	static char _printf_buf[128];
         va_list va;

@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -68,19 +69,109 @@ I_ZoneBase(int *size)
 int
 I_GetTime(void)
 {
-	uint16_t vt_now = video_state[0] & 0xffff;
+  uint32_t time;
+  asm volatile ("csrr %[time], mcycle" : [time]"=r"(time));
+  return (time * 32) / 1000000;
 
-	if (vt_now < vt_last)
-		vt_base += 65536;
-	vt_last = vt_now;
+	// uint16_t vt_now = video_state[0] & 0xffff;
 
-	/* TIC_RATE is 35 in theory */
-	return (vt_base + vt_now) >> 1;
+	// if (vt_now < vt_last)
+	// 	vt_base += 65536;
+	// vt_last = vt_now;
+
+	// /* TIC_RATE is 35 in theory */
+	// return (vt_base + vt_now) >> 1;
 }
 
+static int print_count = 0;
+
+static uint8_t prev_btn = 0;
+static volatile uint8_t* btn_ptr = (volatile uint8_t*)0x20000000;
+
+static void I_GetRemoteEvent(void) {
+  event_t event;
+
+  uint8_t btn = *btn_ptr;
+
+  if ((btn & 2) && (btn & 4)) {
+    btn |= 64;
+    btn &= ~4;
+  }
+
+  if ((btn & 2) && (btn & 8)) {
+    btn |= 128;
+    btn &= ~8;
+  }
+
+  btn &= ~2;
+
+  uint8_t press_btn = btn & ~prev_btn;
+  uint8_t release_btn = prev_btn & ~btn;
+  prev_btn = btn;
+
+  while (press_btn) {
+    event.type = ev_keydown;
+
+    if (press_btn & 1) {
+      event.data1 = KEY_RCTRL;
+      press_btn &= ~1;
+    } else if (press_btn & 4) {
+      event.data1 = KEY_UPARROW;
+      press_btn &= ~4;
+    } else if (press_btn & 8) {
+      event.data1 = KEY_DOWNARROW;
+      press_btn &= ~8;
+    } else if (press_btn & 16) {
+      event.data1 = KEY_LEFTARROW;
+      press_btn &= ~16;
+    } else if (press_btn & 32) {
+      event.data1 = KEY_RIGHTARROW;
+      press_btn &= ~32;
+    } else if (press_btn & 64) {
+      event.data1 = KEY_ENTER;
+      press_btn &= ~64;
+    } else if (press_btn & 128) {
+      event.data1 = ' ';
+      press_btn &= ~128;
+    }
+
+    D_PostEvent(&event);
+  }
+
+  while (release_btn) {
+    event.type = ev_keyup;
+
+    if (release_btn & 1) {
+      event.data1 = KEY_RCTRL;
+      release_btn &= ~1;
+    } else if (release_btn & 4) {
+      event.data1 = KEY_UPARROW;
+      release_btn &= ~4;
+    } else if (release_btn & 8) {
+      event.data1 = KEY_DOWNARROW;
+      release_btn &= ~8;
+    } else if (release_btn & 16) {
+      event.data1 = KEY_LEFTARROW;
+      release_btn &= ~16;
+    } else if (release_btn & 32) {
+      event.data1 = KEY_RIGHTARROW;
+      release_btn &= ~32;
+    } else if (release_btn & 64) {
+      event.data1 = KEY_ENTER;
+      release_btn &= ~64;
+    } else if (release_btn & 128) {
+      event.data1 = ' ';
+      release_btn &= ~128;
+    }
+
+    D_PostEvent(&event);
+  }
+
+
+}
 
 static void
-I_GetRemoteEvent(void)
+I_GetRemoteEvent2(void)
 {
 	event_t event;
 
@@ -118,11 +209,21 @@ I_GetRemoteEvent(void)
 	boolean mupd = false;
 	int mdx = 0;
 	int mdy = 0;
+  int oldch = 0;
 
 	while (1) {
 		int ch = console_getchar_nowait();
 		if (ch == -1)
 			break;
+    if (ch == 0)
+      break;
+    if (ch == oldch)
+      break;
+    oldch = ch;
+
+    print_count++;
+    if (print_count % 20 == 0)
+      printf("read event: %c\n", ch);
 
 		boolean msb = ch & 0x80;
 		ch &= 0x7f;

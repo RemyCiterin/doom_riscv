@@ -48,15 +48,15 @@ I_ShutdownGraphics(void)
 void
 I_SetPalette(byte* palette)
 {
-	static volatile uint32_t * const video_pal = (void*)(VID_PAL_BASE);
-	byte r, g, b;
+	// static volatile uint32_t * const video_pal = (void*)(VID_PAL_BASE);
+	// byte r, g, b;
 
-	for (int i=0 ; i<256 ; i++) {
-		r = gammatable[usegamma][*palette++];
-		g = gammatable[usegamma][*palette++];
-		b = gammatable[usegamma][*palette++];
-		video_pal[i] = ((uint32_t)r << 16) | ((uint32_t)g << 8) | (uint32_t)b;
-	}
+	// for (int i=0 ; i<256 ; i++) {
+	// 	r = gammatable[usegamma][*palette++];
+	// 	g = gammatable[usegamma][*palette++];
+	// 	b = gammatable[usegamma][*palette++];
+	// 	video_pal[i] = ((uint32_t)r << 16) | ((uint32_t)g << 8) | (uint32_t)b;
+	// }
 }
 
 
@@ -65,15 +65,24 @@ I_UpdateNoBlit(void)
 {
 }
 
+static int frames = 0;
+
 void
 I_FinishUpdate (void)
 {
+  //printf("\nUpdate screen buffer");
 	/* Copy from RAM buffer to frame buffer */
 	memcpy(
 		(void*)VID_FB_BASE,
 		screens[0],
 		SCREENHEIGHT * SCREENWIDTH
 	);
+
+  frames++;
+
+  if (frames % 256 == 0) {
+    printf("frames: %d\n", frames);
+  }
 
 	/* Very crude FPS measure (time to render 100 frames */
 #if 1
@@ -94,9 +103,9 @@ I_FinishUpdate (void)
 void
 I_WaitVBL(int count)
 {
-	/* Buys-Wait for VBL status bit */
-	static volatile uint32_t * const video_state = (void*)(VID_CTRL_BASE);
-	while (!(video_state[0] & (1<<16)));
+	// /* Buys-Wait for VBL status bit */
+	// static volatile uint32_t * const video_state = (void*)(VID_CTRL_BASE);
+	// while (!(video_state[0] & (1<<16)));
 }
 
 

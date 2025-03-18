@@ -32,6 +32,7 @@
 
 #define LIBC_DEBUG
 
+extern uint8_t _binary_doom1_wad_start;
 
 // HEAP handling
 // -------------
@@ -60,7 +61,7 @@ static struct {
 	size_t      len;	/* Length */
 	void *      addr;	/* Address in flash */
 } fs[] = {
-	{ "doomu.wad", 12408292, (void*)0x40200000 },
+	{ "doom1.wad", 4196020, (void*)&_binary_doom1_wad_start },
 	{ NULL }
 };
 

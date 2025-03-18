@@ -378,6 +378,7 @@ void NetUpdate (void)
     nowtime = I_GetTime ()/ticdup;
     newtics = nowtime - gametime;
     gametime = nowtime;
+    //printf("newtics: %d\n", newtics);
 
     if (newtics <= 0)   // nothing new to update
         goto listen;
@@ -645,6 +646,8 @@ void TryRunTics (void)
     int         counts;
     int         numplaying;
 
+    //printf("Enter tryRuntics\n");
+
     // get real tics
     entertic = I_GetTime ()/ticdup;
     realtics = entertic - oldentertics;
@@ -652,6 +655,7 @@ void TryRunTics (void)
 
     // get available tics
     NetUpdate ();
+    //printf("NetUpdate\n");
 
     lowtic = MAXINT;
     numplaying = 0;
@@ -673,6 +677,8 @@ void TryRunTics (void)
         counts = realtics;
     else
         counts = availabletics;
+
+    //printf("counts: %d", counts);
 
     if (counts < 1)
         counts = 1;

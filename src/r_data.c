@@ -82,12 +82,12 @@ typedef struct
 //
 typedef struct
 {
-    char                name[8];
-    boolean             masked;
-    short               width;
-    short               height;
-    void                **columndirectory;      // OBSOLETE
-    short               patchcount;
+    char      volatile          name[8];
+    boolean   volatile          masked;
+    short     volatile          width;
+    short     volatile          height;
+    void      volatile          **columndirectory;      // OBSOLETE
+    short     volatile          patchcount;
     mappatch_t  patches[1];
 } maptexture_t;
 
@@ -649,6 +649,7 @@ void R_InitColormaps (void)
 //
 void R_InitData (void)
 {
+    printf("\nReady to InitTextures");
     R_InitTextures ();
     printf ("\nInitTextures");
     R_InitFlats ();

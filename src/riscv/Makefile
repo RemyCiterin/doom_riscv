@@ -1,11 +1,11 @@
-CROSS ?= riscv-none-embed-
+CROSS ?= riscv32-none-elf-
 
 CC = $(CROSS)gcc
 OBJCOPY = $(CROSS)objcopy
 SIZE = $(CROSS)size
 ICEPROG = iceprog
 
-CFLAGS=-Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -nostartfiles -fomit-frame-pointer -Wl,--gc-section --specs=nano.specs -I..
+CFLAGS=-Wall -O2 -march=rv32im_zicsr -mabi=ilp32 -ffreestanding -flto -nostartfiles -fomit-frame-pointer -Wl,--gc-section -I.. -lc_nano # --specs=nano.specs
 
 CFLAGS += \
 	-DNORMALUNIX \
@@ -55,6 +55,10 @@ prog: doom-riscv.bin
 prog_wad: data/doomu.wad
 	$(ICEPROG) -o 2M $<
 
+load:
+	riscv32-none-elf-objcopy -O binary ./doom-riscv.elf ./doom-riscv.bin
+	sudo dd if=./doom-riscv.bin of=/dev/sdg
+	sync
 
 .PHONY: all clean prog prog_wad
 .PRECIOUS: *.elf

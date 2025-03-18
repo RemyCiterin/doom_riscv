@@ -1,54 +1,56 @@
-MEMORY
-{
-    ROM   (xr)  : ORIGIN = 0x40100000, LENGTH = 0x100000	/* 1024k */
-    PSRAM (xrw) : ORIGIN = 0x41000000, LENGTH = 0x800000	/* 8192k */
-    BRAM  (xrw) : ORIGIN = 0x00000010, LENGTH = 0x03f0		/*  ~ 1k */
-}
-ENTRY(_start)
+OUTPUT_ARCH("riscv")
+OUTPUT_FORMAT("elf32-littleriscv")
+ENTRY(_start);
+
 SECTIONS {
-    __stacktop = ORIGIN(PSRAM) + LENGTH(PSRAM);
-    .text :
-    {
-        . = ALIGN(4);
-        *(.text.start)
-        *(.text)
-        *(.text*)
-        *(.rodata)
-        *(.rodata*)
-        *(.srodata)
-        *(.srodata*)
-        . = ALIGN(4);
-        _etext = .;
-        _sidata = _etext;
-    } >ROM
-    .data : AT ( _sidata )
-    {
-        . = ALIGN(4);
-        _sdata = .;
-        _ram_start = .;
-        . = ALIGN(4);
-        *(.data)
-        *(.data*)
-        *(.sdata)
-        *(.sdata*)
-        . = ALIGN(4);
-        _edata = .;
-    } >PSRAM
-    .bss :
-    {
-        . = ALIGN(4);
-        _sbss = .;
-        *(.bss)
-        *(.bss*)
-        *(.sbss)
-        *(.sbss*)
-        *(COMMON)
-        . = ALIGN(4);
-        _ebss = .;
-    } >PSRAM
-    .heap :
-    {
-        . = ALIGN(4);
-        _heap_start = .;
-    } >PSRAM
+    . = 0x80010000;
+    PROVIDE(__kernel_start_phys = .);
+
+    .text : ALIGN(16) {
+        *(.text.init)
+        . = ALIGN(16);
+        *(.text .text.*)
+    }
+
+    PROVIDE(__global_pointer$ = .);
+
+    .srodata : ALIGN(16) {
+        *(.srodata .srodata.*)
+    }
+
+    .sdata : ALIGN(16) {
+        *(.sdata .sdata.*)
+    }
+
+
+    .data : ALIGN(16) {
+        *(.data .data.*)
+        *(.rawdata*)
+    }
+
+    .rodata : ALIGN(16) {
+        *(.rodata .rodata.*)
+    }
+
+    .eh_frame : ALIGN(16) {
+        *(.eh_frame)
+    }
+
+    PROVIDE(__bss_start = .);
+
+    .sbss : ALIGN(16) {
+        *(.sbss .sbss.*)
+    }
+
+    .bss : ALIGN(16) {
+        *(.bss .bss.*)
+    }
+
+    PROVIDE(__bss_end = .);
+
+    . = ALIGN(4k);
+
+    PROVIDE(_heap_start = .);
+
+    /DISCARD/ : { *(.eh_frame_hdr .eh_frame) }
 }
